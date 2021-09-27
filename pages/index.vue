@@ -6,63 +6,56 @@
       :mapping="mapping"
       :page="page"
     >
-      <br-component component="menu"></br-component>
+      <br-component component="menu" />
     </br-page>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import axios from 'axios'
-
+import { initialize, Page } from '@bloomreach/spa-sdk'
 import {
+  useRoute,
+  useContext,
+  onServerPrefetch,
   ssrRef,
-  ref,
-  useAsync,
-  onMounted,
   useFetch,
-  computed,
-  unref,
+  useAsync,
+  ref,
 } from '@nuxtjs/composition-api'
-import { Configuration, initialize, Page } from '@bloomreach/spa-sdk'
-import Menu from '~/components/BrMenu.vue'
+
+import BrMenu from '~/components/BrMenu.vue'
 
 export default Vue.extend({
-  // setup(props: any, { root }: any) {
-  //   const configuration = {
-  //     endpoint: `https://vuestorefront.bloomreach.io/delivery/site/v1/channels/channel4/pages`,
-  //     httpClient: axios,
-  //     path: root.$route.fullPath,
-  //   }
+  setup() {
+    const route = useRoute()
+    const context = useContext()
 
-  //   const page = useAsync(() => initialize(configuration));
-
-  //   return {
-  //     page,
-  //     configuration,
-  //     mapping: {
-  //       menu: Menu,
-  //     },
-  //   }
-  // },
-  async asyncData(context) {
     const configuration = {
       endpoint: `https://vuestorefront.bloomreach.io/delivery/site/v1/channels/channel4/pages`,
-      path: context.route.fullPath,
+      path: route.value.fullPath,
+      httpClient: context.$axios,
     }
-    const page = await initialize({
-      ...configuration,
-      httpClient: axios,
+
+    const page = ssrRef<Page | undefined>(undefined)
+    onServerPrefetch(async () => {
+      page.value = await initialize(configuration)
     })
+
+    // const page = ref<Page | undefined>(undefined);
+    // useFetch(async () => {
+    //   page.value = await initialize(configuration);
+    // });
+
+    // const page = useAsync(() => initialize(configuration));
+
     return {
+      mapping: {
+        menu: BrMenu,
+      },
       configuration,
       page,
     }
   },
-  data: () => ({
-    mapping: {
-      menu: Menu,
-    },
-  }),
 })
 </script>
