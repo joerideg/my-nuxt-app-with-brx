@@ -6,83 +6,66 @@
       :mapping="mapping"
       :page="page"
     >
-      <br-component component="menu" />
+      <div class="page-body">
+        <div class="layout">
+          <h1>Top</h1>
+          <br-component component="top" />
+        </div>
+        <div class="layout">
+          <h1>Main</h1>
+          <br-component component="main" />
+        </div>
+        <div class="layout">
+          <h1>Right</h1>
+          <br-component component="right" />
+        </div>
+        <div class="layout">
+          <h1>Bottom</h1>
+          <br-component component="bottom" />
+        </div>
+      </div>
     </br-page>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import { initialize, Page } from '@bloomreach/spa-sdk'
-import {
-  useRoute,
-  useContext,
-  onServerPrefetch,
-  ssrRef,
-  useFetch,
-  useAsync,
-  ref,
-} from '@nuxtjs/composition-api'
+import { initialize } from '@bloomreach/spa-sdk'
 
 import BrMenu from '~/components/BrMenu.vue'
+import BrBannerVue from '~/components/BrBanner.vue'
 
 export default Vue.extend({
-  // this setup method wont work, the value of 'page' passed to the BrMenu
-  // component is not the same (by reference) as the value returned from the
-  // initialize function (it does work when you would set the value on client side)
-  setup() {
-    const route = useRoute()
-    const context = useContext()
-
-    const configuration = {
-      endpoint: `https://vuestorefront.bloomreach.io/delivery/site/v1/channels/channel4/pages`,
-      path: route.value.fullPath,
-      httpClient: context.$axios,
-    }
-
-    const page = ssrRef<Page | undefined>(undefined)
-    onServerPrefetch(async () => {
-      page.value = await initialize(configuration)
-    })
-
-    // const page = ref<Page | undefined>(undefined);
-    // useFetch(async () => {
-    //   page.value = await initialize(configuration);
-    // });
-
-    // const page = useAsync(() => initialize(configuration));
-
+  data(): any {
     return {
       mapping: {
         menu: BrMenu,
+        Banner: BrBannerVue,
       },
-      configuration,
-      page,
+      configuration: {
+        debug: true,
+        endpointQueryParameter: 'endpoint',
+        path: this.$route.fullPath,
+        httpClient: this.$nuxt.$axios,
+      },
+      page: undefined,
     }
   },
-  // Using normal asyncData hooks does work
-  // async asyncData(context) {
-  //   const configuration = {
-  //     endpoint: `https://vuestorefront.bloomreach.io/delivery/site/v1/channels/channel4/pages`,
-  //     path: context.route.fullPath,
-  //   }
-
-  //   const page = await initialize({
-  //     ...configuration,
-  //     httpClient: context.$axios,
-  //   })
-
-  //   return {
-  //     configuration,
-  //     page,
-  //   }
-  // },
-  // data(): any {
-  //   return {
-  //     mapping: {
-  //       menu: BrMenu,
-  //     },
-  //   }
-  // },
+  async mounted() {
+    this.page = await initialize(this.configuration)
+  },
 })
 </script>
+
+<style scoped>
+.page-body {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.layout {
+  display: block;
+  min-height: 50px;
+}
+</style>
